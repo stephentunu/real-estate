@@ -1,0 +1,59 @@
+# Jaston Real Estate Celery Worker
+# Generated automatically by Jaston Real Estate Service Generator
+# DO NOT EDIT MANUALLY - Edit templates and configs instead
+
+[Unit]
+Description=Jaston Real Estate Celery Worker
+After=network.target jaston-redis.service jaston-django.service
+Wants=network.target jaston-redis.service jaston-django.service
+Requires=network.target jaston-redis.service jaston-django.service
+StartLimitIntervalSec=60
+
+[Service]
+Type=simple
+User=douglas
+Group=douglas
+WorkingDirectory=/home/douglas/jaston-real-estate/backend
+
+# Celery worker command
+ExecStart=/home/douglas/jaston-real-estate/backend/venv/bin/celery -A jaston worker --loglevel=INFO --concurrency=4
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill -TERM $MAINPID
+
+# Restart policy
+Restart=on-failure
+RestartSec=1
+StartLimitBurst=3
+
+# Environment variables
+Environment="DJANGO_SETTINGS_MODULE=jaston.settings"
+Environment="PYTHONPATH=/home/douglas/jaston-real-estate/backend"
+Environment="PATH=/home/douglas/jaston-real-estate/backend/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="DEBUG=True"
+Environment="LOG_LEVEL=DEBUG"
+Environment="DJANGO_SETTINGS_MODULE=jaston.settings"
+Environment="CELERY_BROKER_URL=redis://localhost:6379/1"
+Environment="CELERY_RESULT_BACKEND=redis://localhost:6379/2"
+
+# Celery-specific environment
+Environment="PYTHONUNBUFFERED=1"
+Environment="C_FORCE_ROOT=1"
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=jaston-celery-worker
+
+# Security settings
+ProtectSystem=false
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# Resource limits
+MemoryLimit=512M
+CPUQuota=100%
+TasksMax=50
+
+[Install]
+WantedBy=multi-user.target

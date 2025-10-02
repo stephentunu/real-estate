@@ -1,0 +1,58 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 100,
+    "fields": {
+      "username": "perf_user_1",
+      "email": "perf1@example.com",
+      "first_name": "Performance",
+      "last_name": "User1",
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "date_joined": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 101,
+    "fields": {
+      "username": "perf_user_2",
+      "email": "perf2@example.com",
+      "first_name": "Performance",
+      "last_name": "User2",
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "date_joined": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 102,
+    "fields": {
+      "username": "perf_landlord",
+      "email": "perf_landlord@example.com",
+      "first_name": "Performance",
+      "last_name": "Landlord",
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "date_joined": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk": 103,
+    "fields": {
+      "username": "perf_tenant",
+      "email": "perf_tenant@example.com",
+      "first_name": "Performance",
+      "last_name": "Tenant",
+      "is_active": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "date_joined": "2024-01-01T00:00:00Z"
+    }
+  }
+]

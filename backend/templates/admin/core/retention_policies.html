@@ -1,0 +1,76 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>Data Retention Policies</h2>
+    
+    <div class="results">
+        <table id="result_list">
+            <thead>
+                <tr>
+                    <th scope="col">Model</th>
+                    <th scope="col">App</th>
+                    <th scope="col">Retention Days</th>
+                    <th scope="col">Policy Source</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for model in soft_delete_models %}
+                <tr class="{% cycle 'row1' 'row2' %}">
+                    <td>{{ model.verbose_name }}</td>
+                    <td>{{ model.app_label }}</td>
+                    <td>
+                        {% if model.retention_days %}
+                            {{ model.retention_days }} days
+                        {% else %}
+                            <em>No policy</em>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if model.name in retention_policies %}
+                            Model-specific
+                        {% elif model.app_label in retention_policies %}
+                            App-level
+                        {% elif 'default' in retention_policies %}
+                            Global default
+                        {% else %}
+                            None
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if model.has_policy %}
+                            <span style="color: green;">✓ Configured</span>
+                        {% else %}
+                            <span style="color: orange;">⚠ No Policy</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="module" style="margin-top: 20px;">
+        <h3>Current Retention Policy Configuration</h3>
+        <pre style="background: #f8f8f8; padding: 15px; border-radius: 5px; overflow-x: auto;">{{ retention_policies|pprint }}</pre>
+        
+        <p><strong>Note:</strong> Retention policies are configured in <code>settings.SOFT_DELETE_RETENTION_POLICIES</code>.</p>
+        
+        <div class="submit-row">
+            <a href="{% url 'admin:core_cleanup_report' %}" class="default">View Cleanup Report</a>
+            <a href="{% url 'admin:core_run_cleanup' %}" class="default">Run Cleanup</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

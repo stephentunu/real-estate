@@ -1,0 +1,315 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrahead %}
+<style>
+.cleanup-form {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 20px;
+    margin: 20px 0;
+}
+.form-row {
+    margin-bottom: 15px;
+}
+.form-row label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.form-row input, .form-row select {
+    width: 100%;
+    max-width: 300px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+.form-row input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}
+.cleanup-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 10px;
+}
+.cleanup-btn:hover {
+    background: #c82333;
+}
+.dry-run-btn {
+    background: #007cba;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+.dry-run-btn:hover {
+    background: #005a87;
+}
+.progress-container {
+    display: none;
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: #007cba;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+.results-container {
+    display: none;
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+.warning-box {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 15px 0;
+}
+.error-box {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 15px 0;
+}
+.success-box {
+    background: #d1edff;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 15px 0;
+}
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>Run Cleanup Operation</h2>
+    
+    <div class="warning-box">
+        <strong>⚠️ Warning:</strong> This operation will permanently delete soft-deleted records that exceed their retention period. 
+        Always run a dry-run first to preview what will be deleted.
+    </div>
+    
+    <form id="cleanup-form" class="cleanup-form">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <label for="model-select">Target Model (optional):</label>
+            <select id="model-select" name="model">
+                <option value="">All models with retention policies</option>
+                {% for model in soft_delete_models %}
+                    <option value="{{ model.name }}">{{ model.verbose_name }} ({{ model.app_label }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-row">
+            <label for="days-override">Override Retention Days (optional):</label>
+            <input type="number" id="days-override" name="days" min="1" placeholder="Leave empty to use configured policies">
+        </div>
+        
+        <div class="form-row">
+            <label>
+                <input type="checkbox" id="force-cleanup" name="force">
+                Force cleanup (ignore safety checks)
+            </label>
+        </div>
+        
+        <div class="form-row">
+            <button type="button" class="dry-run-btn" onclick="runCleanup(true)">🔍 Dry Run (Preview)</button>
+            <button type="button" class="cleanup-btn" onclick="runCleanup(false)">🗑️ Run Cleanup</button>
+        </div>
+    </form>
+    
+    <div id="progress-container" class="progress-container">
+        <h3>Operation Progress</h3>
+        <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <div id="progress-text">Initializing...</div>
+    </div>
+    
+    <div id="results-container" class="results-container">
+        <h3>Cleanup Results</h3>
+        <div id="results-content"></div>
+    </div>
+</div>
+
+<script>
+let cleanupInProgress = false;
+
+function runCleanup(dryRun = false) {
+    if (cleanupInProgress) {
+        alert('Cleanup operation already in progress');
+        return;
+    }
+    
+    const form = document.getElementById('cleanup-form');
+    const formData = new FormData(form);
+    
+    if (dryRun) {
+        formData.append('dry_run', 'true');
+    }
+    
+    if (!dryRun && !confirm('Are you sure you want to run the cleanup? This will permanently delete records.')) {
+        return;
+    }
+    
+    cleanupInProgress = true;
+    showProgress();
+    
+    fetch('{% url "admin:core_run_cleanup" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideProgress();
+        showResults(data, dryRun);
+        cleanupInProgress = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        hideProgress();
+        showError('Failed to run cleanup operation. Please try again.');
+        cleanupInProgress = false;
+    });
+}
+
+function showProgress() {
+    document.getElementById('progress-container').style.display = 'block';
+    document.getElementById('results-container').style.display = 'none';
+    
+    // Simulate progress (in real implementation, you might use WebSockets or polling)
+    let progress = 0;
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    
+    const interval = setInterval(() => {
+        progress += Math.random() * 20;
+        if (progress > 90) progress = 90;
+        
+        progressFill.style.width = progress + '%';
+        progressText.textContent = `Processing... ${Math.round(progress)}%`;
+    }, 500);
+    
+    // Store interval ID to clear it later
+    window.cleanupProgressInterval = interval;
+}
+
+function hideProgress() {
+    if (window.cleanupProgressInterval) {
+        clearInterval(window.cleanupProgressInterval);
+    }
+    
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    
+    progressFill.style.width = '100%';
+    progressText.textContent = 'Complete!';
+    
+    setTimeout(() => {
+        document.getElementById('progress-container').style.display = 'none';
+    }, 1000);
+}
+
+function showResults(data, dryRun) {
+    const container = document.getElementById('results-container');
+    const content = document.getElementById('results-content');
+    
+    if (data.success) {
+        let html = `
+            <div class="${dryRun ? 'success-box' : 'success-box'}">
+                <h4>${dryRun ? '🔍 Dry Run Results' : '✅ Cleanup Completed Successfully'}</h4>
+                <p><strong>Total records processed:</strong> ${data.total_processed}</p>
+                <p><strong>Records ${dryRun ? 'would be' : ''} deleted:</strong> ${data.deleted_count}</p>
+                <p><strong>Models affected:</strong> ${data.models_affected}</p>
+                <p><strong>Execution time:</strong> ${data.execution_time}s</p>
+            </div>
+        `;
+        
+        if (data.details && data.details.length > 0) {
+            html += '<h4>Detailed Results:</h4><ul>';
+            data.details.forEach(detail => {
+                html += `<li><strong>${detail.model}:</strong> ${detail.count} records ${dryRun ? 'would be' : ''} deleted</li>`;
+            });
+            html += '</ul>';
+        }
+        
+        if (dryRun && data.deleted_count > 0) {
+            html += `
+                <div class="warning-box">
+                    <strong>⚠️ Preview:</strong> ${data.deleted_count} records are ready for deletion. 
+                    Run the actual cleanup to permanently delete these records.
+                </div>
+            `;
+        }
+        
+        content.innerHTML = html;
+    } else {
+        content.innerHTML = `
+            <div class="error-box">
+                <h4>❌ Operation Failed</h4>
+                <p><strong>Error:</strong> ${data.error}</p>
+                ${data.details ? `<p><strong>Details:</strong> ${data.details}</p>` : ''}
+            </div>
+        `;
+    }
+    
+    container.style.display = 'block';
+}
+
+function showError(message) {
+    const container = document.getElementById('results-container');
+    const content = document.getElementById('results-content');
+    
+    content.innerHTML = `
+        <div class="error-box">
+            <h4>❌ Error</h4>
+            <p>${message}</p>
+        </div>
+    `;
+    
+    container.style.display = 'block';
+}
+</script>
+{% endblock %}

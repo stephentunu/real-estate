@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connection Error Testing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-connected {
+            background-color: #28a745;
+        }
+        .status-disconnected {
+            background-color: #dc3545;
+        }
+        .status-checking {
+            background-color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <h1>Connection Error Testing</h1>
+    <p>This page tests the improved error handling with backend offline scenarios.</p>
+    
+    <div class="test-section">
+        <h2>Connection Status</h2>
+        <div id="connection-status">
+            <span class="status-indicator status-checking"></span>
+            <span>Checking connection...</span>
+        </div>
+        <button class="test-button" onclick="checkConnection()">Check Connection</button>
+        <div id="connection-result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>API Call Tests</h2>
+        <button class="test-button" onclick="testGetProperties()">Test Get Properties</button>
+        <button class="test-button" onclick="testGetProperty()">Test Get Single Property</button>
+        <button class="test-button" onclick="testCreateProperty()">Test Create Property</button>
+        <div id="api-result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Retry Logic Tests</h2>
+        <button class="test-button" onclick="testRetryLogic()">Test Retry with Backoff</button>
+        <button class="test-button" onclick="testRetryFetch()">Test Retry Fetch</button>
+        <div id="retry-result" class="result" style="display: none;"></div>
+    </div>
+
+    <script type="module">
+        // Retry utility functions (embedded for testing)
+        async function testRetryFetch(url, options = {}, retryOptions = {}) {
+            const {
+                maxAttempts = 3,
+                baseDelay = 1000,
+                maxDelay = 10000,
+                backoffFactor = 2,
+                retryCondition = (error) => {
+                    // Retry on network errors
+                    if (error instanceof TypeError && error.message.includes('fetch')) {
+                        return true;
+                    }
+                    // Retry on connection errors
+                    if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+                        return true;
+                    }
+                    // Retry on 5xx errors
+                    if (error.status >= 500) {
+                        return true;
+                    }
+                    return false;
+                },
+                onRetry = (attempt, error) => {
+                    console.log(`Retry attempt ${attempt} after error:`, error.message);
+                }
+            } = retryOptions;
+
+            let lastError;
+            
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    const response = await fetch(url, options);
+                    
+                    if (!response.ok && response.status >= 500) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    
+                    return response;
+                } catch (error) {
+                    lastError = error;
+                    
+                    if (attempt === maxAttempts || !retryCondition(error)) {
+                        throw error;
+                    }
+                    
+                    if (onRetry) {
+                        onRetry(attempt, error);
+                    }
+                    
+                    const delay = Math.min(
+                        baseDelay * Math.pow(backoffFactor, attempt - 1),
+                        maxDelay
+                    );
+                    
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+            
+            throw lastError;
+        }
+
+        // Make functions available globally for button clicks
+        window.checkConnection = async function() {
+            const resultDiv = document.getElementById('connection-result');
+            const statusDiv = document.getElementById('connection-status');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Checking connection...';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/health/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (response.ok) {
+                    statusDiv.innerHTML = '<span class="status-indicator status-connected"></span><span>Connected</span>';
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = 'Backend is online and responding';
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<span class="status-indicator status-disconnected"></span><span>Disconnected</span>';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Connection failed: ${error.message}`;
+            }
+        };
+
+        window.testGetProperties = async function() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing get properties with retry logic...';
+            
+            try {
+                const response = await testRetryFetch('http://localhost:8000/api/v1/properties/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }, {
+                    maxAttempts: 3,
+                    baseDelay: 1000,
+                    onRetry: (attempt, error) => {
+                        resultDiv.textContent += `\nRetry attempt ${attempt}: ${error.message}`;
+                    }
+                });
+                
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `Success! Retrieved ${data.results?.length || 0} properties`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Failed after retries: ${error.message}`;
+            }
+        };
+
+        window.testGetProperty = async function() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing get single property with retry logic...';
+            
+            try {
+                const response = await testRetryFetch('http://localhost:8000/api/v1/properties/1/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }, {
+                    maxAttempts: 3,
+                    baseDelay: 1000,
+                    onRetry: (attempt, error) => {
+                        resultDiv.textContent += `\nRetry attempt ${attempt}: ${error.message}`;
+                    }
+                });
+                
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `Success! Retrieved property: ${data.title || 'Unknown'}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Failed after retries: ${error.message}`;
+            }
+        };
+
+        window.testCreateProperty = async function() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing create property with retry logic...';
+            
+            try {
+                const response = await testRetryFetch('http://localhost:8000/api/v1/properties/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: 'Test Property',
+                        description: 'Test description',
+                        price: 100000,
+                        property_type: 1,
+                        status: 1
+                    })
+                }, {
+                    maxAttempts: 3,
+                    baseDelay: 1000,
+                    onRetry: (attempt, error) => {
+                        resultDiv.textContent += `\nRetry attempt ${attempt}: ${error.message}`;
+                    }
+                });
+                
+                const data = await response.json();
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `Success! Created property with ID: ${data.id}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Failed after retries: ${error.message}`;
+            }
+        };
+
+        window.testRetryLogic = async function() {
+            const resultDiv = document.getElementById('retry-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing retry logic with simulated failures...';
+            
+            let attempts = 0;
+            const maxAttempts = 3;
+            
+            try {
+                const result = await testRetryFetch('http://localhost:8000/api/v1/nonexistent/', {
+                    method: 'GET',
+                }, {
+                    maxAttempts,
+                    baseDelay: 500,
+                    onRetry: (attempt, error) => {
+                        attempts = attempt;
+                        resultDiv.textContent += `\nAttempt ${attempt + 1}: ${error.message}`;
+                    }
+                });
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent += `\nUnexpected success after ${attempts + 1} attempts`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += `\nFinal failure after ${attempts + 1} attempts: ${error.message}`;
+            }
+        };
+
+        window.testRetryFetch = async function() {
+            const resultDiv = document.getElementById('retry-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Testing retryFetch function directly...';
+            
+            try {
+                // Test with a URL that should fail
+                const response = await testRetryFetch('http://localhost:8000/api/v1/test-endpoint/', {
+                    method: 'GET',
+                }, {
+                    maxAttempts: 2,
+                    baseDelay: 300,
+                    onRetry: (attempt, error) => {
+                        resultDiv.textContent += `\nRetry ${attempt}: ${error.message}`;
+                    }
+                });
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent += '\nUnexpected success!';
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += `\nRetryFetch failed as expected: ${error.message}`;
+            }
+        };
+
+        // Auto-check connection on page load
+        window.addEventListener('load', () => {
+            checkConnection();
+        });
+    </script>
+</body>
+</html>

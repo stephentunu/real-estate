@@ -1,0 +1,234 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrahead %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+.stat-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 15px;
+    text-align: center;
+}
+.stat-number {
+    font-size: 2em;
+    font-weight: bold;
+    color: #007cba;
+}
+.stat-label {
+    color: #666;
+    margin-top: 5px;
+}
+.refresh-btn {
+    background: #007cba;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+.refresh-btn:hover {
+    background: #005a87;
+}
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>Cleanup Report & Statistics</h2>
+    
+    <button class="refresh-btn" onclick="refreshReport()">🔄 Refresh Report</button>
+    
+    <div id="loading" style="display: none;">Loading...</div>
+    
+    <div id="report-content">
+        <div class="stats-grid" id="summary-stats">
+            <!-- Summary stats will be loaded here -->
+        </div>
+        
+        <div class="module">
+            <h3>Model Statistics</h3>
+            <div style="width: 100%; height: 400px; margin: 20px 0;">
+                <canvas id="cleanupChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="module">
+            <h3>Detailed Model Report</h3>
+            <div class="results">
+                <table id="model-report-table">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>Retention Policy</th>
+                            <th>Soft Deleted</th>
+                            <th>Ready for Cleanup</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="model-report-body">
+                        <!-- Model data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let chart = null;
+
+function refreshReport() {
+    const loadingEl = document.getElementById('loading');
+    const contentEl = document.getElementById('report-content');
+    
+    loadingEl.style.display = 'block';
+    contentEl.classList.add('loading');
+    
+    fetch(window.location.href, {
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        updateSummaryStats(data.summary);
+        updateModelReport(data.models);
+        updateChart(data.models);
+        
+        loadingEl.style.display = 'none';
+        contentEl.classList.remove('loading');
+    })
+    .catch(error => {
+        console.error('Error fetching report:', error);
+        loadingEl.style.display = 'none';
+        contentEl.classList.remove('loading');
+        alert('Failed to refresh report. Please try again.');
+    });
+}
+
+function updateSummaryStats(summary) {
+    const statsContainer = document.getElementById('summary-stats');
+    
+    statsContainer.innerHTML = `
+        <div class="stat-card">
+            <div class="stat-number">${summary.total_soft_deleted}</div>
+            <div class="stat-label">Total Soft Deleted</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">${summary.ready_for_cleanup}</div>
+            <div class="stat-label">Ready for Cleanup</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">${summary.retention_policies}</div>
+            <div class="stat-label">Retention Policies</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">${Math.round((summary.ready_for_cleanup / Math.max(summary.total_soft_deleted, 1)) * 100)}%</div>
+            <div class="stat-label">Cleanup Ratio</div>
+        </div>
+    `;
+}
+
+function updateModelReport(models) {
+    const tbody = document.getElementById('model-report-body');
+    
+    tbody.innerHTML = Object.entries(models).map(([modelName, data]) => `
+        <tr>
+            <td>${data.verbose_name}</td>
+            <td>
+                ${data.retention_days ? `${data.retention_days} days` : '<em>No policy</em>'}
+            </td>
+            <td>${data.soft_deleted_count}</td>
+            <td>
+                <span style="color: ${data.ready_for_cleanup > 0 ? '#d63384' : '#198754'}">
+                    ${data.ready_for_cleanup}
+                </span>
+            </td>
+            <td>
+                ${data.has_retention_policy 
+                    ? '<span style="color: green;">✓ Configured</span>' 
+                    : '<span style="color: orange;">⚠ No Policy</span>'
+                }
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateChart(models) {
+    const ctx = document.getElementById('cleanupChart').getContext('2d');
+    
+    if (chart) {
+        chart.destroy();
+    }
+    
+    const modelNames = Object.keys(models).map(name => models[name].verbose_name);
+    const softDeletedData = Object.values(models).map(data => data.soft_deleted_count);
+    const readyForCleanupData = Object.values(models).map(data => data.ready_for_cleanup);
+    
+    chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: modelNames,
+            datasets: [
+                {
+                    label: 'Soft Deleted Records',
+                    data: softDeletedData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Ready for Cleanup',
+                    data: readyForCleanupData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Soft Deleted Records by Model'
+                }
+            }
+        }
+    });
+}
+
+// Load initial report
+document.addEventListener('DOMContentLoaded', function() {
+    refreshReport();
+});
+</script>
+{% endblock %}

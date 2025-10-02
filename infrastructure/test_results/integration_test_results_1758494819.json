@@ -1,0 +1,498 @@
+{
+  "summary": {
+    "total_tests": 26,
+    "passed": 21,
+    "failed": 5,
+    "success_rate": 80.76923076923077,
+    "total_duration": 0.5251564979553223
+  },
+  "results_by_category": {
+    "integration": [
+      {
+        "name": "api_contract_get__api_v1_properties_",
+        "status": "passed",
+        "duration": 0.03685784339904785,
+        "error_message": null,
+        "details": {
+          "endpoint": "/api/v1/properties/",
+          "method": "GET",
+          "status_code": 404
+        }
+      },
+      {
+        "name": "api_contract_post__api_v1_properties_",
+        "status": "passed",
+        "duration": 0.027405261993408203,
+        "error_message": null,
+        "details": {
+          "endpoint": "/api/v1/properties/",
+          "method": "POST",
+          "status_code": 404
+        }
+      },
+      {
+        "name": "api_contract_get__api_v1_users_profile_",
+        "status": "passed",
+        "duration": 0.025864124298095703,
+        "error_message": null,
+        "details": {
+          "endpoint": "/api/v1/users/profile/",
+          "method": "GET",
+          "status_code": 404
+        }
+      },
+      {
+        "name": "api_contract_post__api_v1_auth_login_",
+        "status": "passed",
+        "duration": 0.03279590606689453,
+        "error_message": null,
+        "details": {
+          "endpoint": "/api/v1/auth/login/",
+          "method": "POST",
+          "status_code": 404
+        }
+      },
+      {
+        "name": "api_contract_post__api_v1_applications_",
+        "status": "passed",
+        "duration": 0.047142744064331055,
+        "error_message": null,
+        "details": {
+          "endpoint": "/api/v1/applications/",
+          "method": "POST",
+          "status_code": 404
+        }
+      },
+      {
+        "name": "api_contract_get__api_v1_leases_",
+        "status": "passed",
+        "duration": 0.028623342514038086,
+        "error_message": null,
+        "details": {
+          "endpoint": "/api/v1/leases/",
+          "method": "GET",
+          "status_code": 404
+        }
+      },
+      {
+        "name": "api_contract_post__api_v1_payments_",
+        "status": "passed",
+        "duration": 0.029057025909423828,
+        "error_message": null,
+        "details": {
+          "endpoint": "/api/v1/payments/",
+          "method": "POST",
+          "status_code": 404
+        }
+      },
+      {
+        "name": "database_api_consistency",
+        "status": "passed",
+        "duration": 4.0531158447265625e-06,
+        "error_message": null,
+        "details": null
+      },
+      {
+        "name": "cache_coherence",
+        "status": "passed",
+        "duration": 1.430511474609375e-06,
+        "error_message": null,
+        "details": null
+      },
+      {
+        "name": "websocket_sync",
+        "status": "passed",
+        "duration": 9.5367431640625e-07,
+        "error_message": null,
+        "details": null
+      },
+      {
+        "name": "websocket_connection",
+        "status": "passed",
+        "duration": 8.797645568847656e-05,
+        "error_message": null,
+        "details": null
+      },
+      {
+        "name": "real_time_updates",
+        "status": "passed",
+        "duration": 2.384185791015625e-06,
+        "error_message": null,
+        "details": null
+      },
+      {
+        "name": "notification_delivery",
+        "status": "passed",
+        "duration": 9.5367431640625e-07,
+        "error_message": null,
+        "details": null
+      }
+    ],
+    "end_to_end": [
+      {
+        "name": "workflow_user_registration_auth",
+        "status": "failed",
+        "duration": 0.027109384536743164,
+        "error_message": null,
+        "details": {
+          "workflow": "user_registration_auth",
+          "steps": 5
+        }
+      },
+      {
+        "name": "workflow_property_management",
+        "status": "failed",
+        "duration": 0.025605440139770508,
+        "error_message": null,
+        "details": {
+          "workflow": "property_management",
+          "steps": 5
+        }
+      },
+      {
+        "name": "workflow_lease_lifecycle",
+        "status": "failed",
+        "duration": 0.022742271423339844,
+        "error_message": null,
+        "details": {
+          "workflow": "lease_lifecycle",
+          "steps": 8
+        }
+      },
+      {
+        "name": "workflow_maintenance_request",
+        "status": "failed",
+        "duration": 0.03037548065185547,
+        "error_message": null,
+        "details": {
+          "workflow": "maintenance_request",
+          "steps": 5
+        }
+      },
+      {
+        "name": "workflow_payment_processing",
+        "status": "failed",
+        "duration": 0.0604090690612793,
+        "error_message": null,
+        "details": {
+          "workflow": "payment_processing",
+          "steps": 5
+        }
+      }
+    ],
+    "performance": [
+      {
+        "name": "api_response_time",
+        "status": "passed",
+        "duration": 0.12821078300476074,
+        "error_message": null,
+        "details": null
+      },
+      {
+        "name": "concurrent_users",
+        "status": "passed",
+        "duration": 2.86102294921875e-06,
+        "error_message": null,
+        "details": null
+      },
+      {
+        "name": "database_query_performance",
+        "status": "passed",
+        "duration": 1.430511474609375e-06,
+        "error_message": null,
+        "details": null
+      },
+      {
+        "name": "frontend_load_time",
+        "status": "passed",
+        "duration": 1.430511474609375e-06,
+        "error_message": null,
+        "details": null
+      }
+    ],
+    "security": [
+      {
+        "name": "authentication_boundaries",
+        "status": "passed",
+        "duration": 1.9073486328125e-06,
+        "error_message": null,
+        "details": null
+      },
+      {
+        "name": "authorization_levels",
+        "status": "passed",
+        "duration": 1.430511474609375e-06,
+        "error_message": null,
+        "details": null
+      },
+      {
+        "name": "data_visibility",
+        "status": "passed",
+        "duration": 1.430511474609375e-06,
+        "error_message": null,
+        "details": null
+      },
+      {
+        "name": "input_validation",
+        "status": "passed",
+        "duration": 9.5367431640625e-07,
+        "error_message": null,
+        "details": null
+      }
+    ]
+  },
+  "detailed_results": [
+    {
+      "name": "api_contract_get__api_v1_properties_",
+      "category": "integration",
+      "status": "passed",
+      "duration": 0.03685784339904785,
+      "error_message": null,
+      "details": {
+        "endpoint": "/api/v1/properties/",
+        "method": "GET",
+        "status_code": 404
+      }
+    },
+    {
+      "name": "api_contract_post__api_v1_properties_",
+      "category": "integration",
+      "status": "passed",
+      "duration": 0.027405261993408203,
+      "error_message": null,
+      "details": {
+        "endpoint": "/api/v1/properties/",
+        "method": "POST",
+        "status_code": 404
+      }
+    },
+    {
+      "name": "api_contract_get__api_v1_users_profile_",
+      "category": "integration",
+      "status": "passed",
+      "duration": 0.025864124298095703,
+      "error_message": null,
+      "details": {
+        "endpoint": "/api/v1/users/profile/",
+        "method": "GET",
+        "status_code": 404
+      }
+    },
+    {
+      "name": "api_contract_post__api_v1_auth_login_",
+      "category": "integration",
+      "status": "passed",
+      "duration": 0.03279590606689453,
+      "error_message": null,
+      "details": {
+        "endpoint": "/api/v1/auth/login/",
+        "method": "POST",
+        "status_code": 404
+      }
+    },
+    {
+      "name": "api_contract_post__api_v1_applications_",
+      "category": "integration",
+      "status": "passed",
+      "duration": 0.047142744064331055,
+      "error_message": null,
+      "details": {
+        "endpoint": "/api/v1/applications/",
+        "method": "POST",
+        "status_code": 404
+      }
+    },
+    {
+      "name": "api_contract_get__api_v1_leases_",
+      "category": "integration",
+      "status": "passed",
+      "duration": 0.028623342514038086,
+      "error_message": null,
+      "details": {
+        "endpoint": "/api/v1/leases/",
+        "method": "GET",
+        "status_code": 404
+      }
+    },
+    {
+      "name": "api_contract_post__api_v1_payments_",
+      "category": "integration",
+      "status": "passed",
+      "duration": 0.029057025909423828,
+      "error_message": null,
+      "details": {
+        "endpoint": "/api/v1/payments/",
+        "method": "POST",
+        "status_code": 404
+      }
+    },
+    {
+      "name": "database_api_consistency",
+      "category": "integration",
+      "status": "passed",
+      "duration": 4.0531158447265625e-06,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "cache_coherence",
+      "category": "integration",
+      "status": "passed",
+      "duration": 1.430511474609375e-06,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "websocket_sync",
+      "category": "integration",
+      "status": "passed",
+      "duration": 9.5367431640625e-07,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "workflow_user_registration_auth",
+      "category": "end_to_end",
+      "status": "failed",
+      "duration": 0.027109384536743164,
+      "error_message": null,
+      "details": {
+        "workflow": "user_registration_auth",
+        "steps": 5
+      }
+    },
+    {
+      "name": "workflow_property_management",
+      "category": "end_to_end",
+      "status": "failed",
+      "duration": 0.025605440139770508,
+      "error_message": null,
+      "details": {
+        "workflow": "property_management",
+        "steps": 5
+      }
+    },
+    {
+      "name": "workflow_lease_lifecycle",
+      "category": "end_to_end",
+      "status": "failed",
+      "duration": 0.022742271423339844,
+      "error_message": null,
+      "details": {
+        "workflow": "lease_lifecycle",
+        "steps": 8
+      }
+    },
+    {
+      "name": "workflow_maintenance_request",
+      "category": "end_to_end",
+      "status": "failed",
+      "duration": 0.03037548065185547,
+      "error_message": null,
+      "details": {
+        "workflow": "maintenance_request",
+        "steps": 5
+      }
+    },
+    {
+      "name": "workflow_payment_processing",
+      "category": "end_to_end",
+      "status": "failed",
+      "duration": 0.0604090690612793,
+      "error_message": null,
+      "details": {
+        "workflow": "payment_processing",
+        "steps": 5
+      }
+    },
+    {
+      "name": "api_response_time",
+      "category": "performance",
+      "status": "passed",
+      "duration": 0.12821078300476074,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "concurrent_users",
+      "category": "performance",
+      "status": "passed",
+      "duration": 2.86102294921875e-06,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "database_query_performance",
+      "category": "performance",
+      "status": "passed",
+      "duration": 1.430511474609375e-06,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "frontend_load_time",
+      "category": "performance",
+      "status": "passed",
+      "duration": 1.430511474609375e-06,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "authentication_boundaries",
+      "category": "security",
+      "status": "passed",
+      "duration": 1.9073486328125e-06,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "authorization_levels",
+      "category": "security",
+      "status": "passed",
+      "duration": 1.430511474609375e-06,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "data_visibility",
+      "category": "security",
+      "status": "passed",
+      "duration": 1.430511474609375e-06,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "input_validation",
+      "category": "security",
+      "status": "passed",
+      "duration": 9.5367431640625e-07,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "websocket_connection",
+      "category": "integration",
+      "status": "passed",
+      "duration": 8.797645568847656e-05,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "real_time_updates",
+      "category": "integration",
+      "status": "passed",
+      "duration": 2.384185791015625e-06,
+      "error_message": null,
+      "details": null
+    },
+    {
+      "name": "notification_delivery",
+      "category": "integration",
+      "status": "passed",
+      "duration": 9.5367431640625e-07,
+      "error_message": null,
+      "details": null
+    }
+  ],
+  "timestamp": 1758494819.6129954
+}

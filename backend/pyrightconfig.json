@@ -1,0 +1,24 @@
+{
+    "typeCheckingMode": "strict",
+    "reportMissingTypeStubs": false,
+    "reportUnknownMemberType": false,
+    "reportUnknownVariableType": false,
+    "reportUnknownArgumentType": false,
+    "reportUnknownLambdaType": false,
+    "pythonVersion": "3.13",
+    "pythonPlatform": "Linux",
+    "include": [
+        "apps",
+        "jaston"
+    ],
+    "exclude": [
+        "**/migrations",
+        "**/venv",
+        "**/node_modules",
+        "**/__pycache__",
+        "**/tests"
+    ],
+    "stubPath": "./typings",
+    "venvPath": "./venv",
+    "venv": "venv"
+}

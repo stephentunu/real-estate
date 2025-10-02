@@ -1,0 +1,37 @@
+{
+  "environment": {
+    "DJANGO_SETTINGS_MODULE": "backend.settings.production",
+    "DEBUG": "False",
+    "LOG_LEVEL": "INFO"
+  },
+  "logging": {
+    "base_dir": "/var/log/jaston-real-estate"
+  },
+  "security": {
+    "no_new_privileges": true,
+    "protect_system": "strict",
+    "protect_home": true,
+    "private_tmp": true,
+    "private_devices": true,
+    "protect_kernel_tunables": true,
+    "protect_kernel_modules": true,
+    "protect_control_groups": true,
+    "restrict_address_families": "AF_UNIX AF_INET AF_INET6",
+    "restrict_namespaces": true,
+    "lock_personality": true,
+    "memory_deny_write_execute": true,
+    "restrict_realtime": true,
+    "restrict_suid_sgid": true,
+    "remove_ipc": true
+  },
+  "resources": {
+    "memory_limit": "1G",
+    "cpu_quota": "200%",
+    "tasks_max": 200
+  },
+  "restart": {
+    "policy": "always",
+    "delay_sec": 5,
+    "max_retries": 10
+  }
+}

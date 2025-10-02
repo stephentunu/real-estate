@@ -1,0 +1,365 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.13'
+
+jobs:
+  # Frontend Code Quality
+  frontend-quality:
+    name: Frontend Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: 'frontend/package-lock.json'
+        
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+      
+    - name: Run ESLint
+      run: |
+        cd frontend
+        npm run lint -- --format=json --output-file=eslint-report.json || true
+        npm run lint
+        
+    - name: Run Prettier check
+      run: |
+        cd frontend
+        npm run format:check
+      
+    - name: Run TypeScript check
+      run: |
+        cd frontend
+        npm run type-check
+      
+    - name: Check bundle size
+      run: |
+        cd frontend
+        npm run build
+        npx bundlesize
+        
+    - name: Upload ESLint report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: eslint-report
+        path: frontend/eslint-report.json
+        retention-days: 7
+
+  # Backend Code Quality
+  backend-quality:
+    name: Backend Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-quality-${{ hashFiles('**/requirements*.txt') }}
+        
+    - name: Install dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        
+    - name: Run Black formatter check
+      run: |
+        cd backend
+        black --check --diff .
+        
+    - name: Run isort import sorting check
+      run: |
+        cd backend
+        isort --check-only --diff .
+        
+    - name: Run flake8 linting
+      run: |
+        cd backend
+        flake8 . --format=json --output-file=flake8-report.json || true
+        flake8 .
+        
+    - name: Run Pyright type checking
+      run: |
+        cd backend
+        pyright --outputjson > pyright-report.json || true
+        pyright
+        
+    - name: Run mypy type checking
+      run: |
+        cd backend
+        mypy . --json-report mypy-report || true
+        mypy .
+        
+    - name: Upload quality reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: backend-quality-reports
+        path: |
+          backend/flake8-report.json
+          backend/pyright-report.json
+          backend/mypy-report/
+        retention-days: 7
+
+  # Security Scanning
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install security tools
+      run: |
+        cd backend
+        pip install bandit safety semgrep
+        cd ..
+        npm install -g audit-ci
+        
+    - name: Run Bandit security linter
+      run: |
+        cd backend
+        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . -ll
+        
+    - name: Run Safety dependency check
+      run: |
+        cd backend
+        safety check --json --output safety-report.json || true
+        safety check
+        
+    - name: Run Semgrep security analysis
+      run: |
+        cd backend
+        semgrep --config=auto --json --output=semgrep-report.json . || true
+        semgrep --config=auto .
+        
+    - name: Run npm audit
+      run: |
+        npm audit --audit-level=moderate --json > npm-audit-report.json || true
+        audit-ci --moderate
+        
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          backend/bandit-report.json
+          backend/safety-report.json
+          backend/semgrep-report.json
+          npm-audit-report.json
+        retention-days: 30
+
+  # Code Analysis
+  code-analysis:
+    name: Code Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install analysis tools
+      run: |
+        cd backend
+        pip install radon xenon vulture
+        
+    - name: Run complexity analysis
+      run: |
+        cd backend
+        radon cc . --json > complexity-report.json
+        radon cc . --min B
+        
+    - name: Run maintainability analysis
+      run: |
+        cd backend
+        radon mi . --json > maintainability-report.json
+        radon mi . --min B
+        
+    - name: Run dead code detection
+      run: |
+        cd backend
+        vulture . --json > vulture-report.json || true
+        vulture . --min-confidence 80
+        
+    - name: Upload analysis reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: code-analysis-reports
+        path: |
+          backend/complexity-report.json
+          backend/maintainability-report.json
+          backend/vulture-report.json
+        retention-days: 7
+
+  # Documentation Quality
+  docs-quality:
+    name: Documentation Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install documentation tools
+      run: |
+        cd backend
+        pip install pydocstyle interrogate
+        
+    - name: Check docstring style
+      run: |
+        cd backend
+        pydocstyle . --format=json > pydocstyle-report.json || true
+        pydocstyle .
+        
+    - name: Check docstring coverage
+      run: |
+        cd backend
+        interrogate . --generate-badge . --badge-format svg
+        interrogate . --fail-under 80
+        
+    - name: Upload documentation reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: docs-quality-reports
+        path: |
+          backend/pydocstyle-report.json
+          backend/interrogate_badge.svg
+        retention-days: 7
+
+  # Dependency Analysis
+  dependency-analysis:
+    name: Dependency Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install analysis tools
+      run: |
+        cd backend
+        pip install pipdeptree pip-audit
+        cd ..
+        npm install -g depcheck license-checker
+        
+    - name: Analyze Python dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+        pipdeptree --json > python-deps.json
+        pip-audit --format=json --output=pip-audit-report.json || true
+        
+    - name: Analyze Node.js dependencies
+      run: |
+        npm ci
+        depcheck --json > depcheck-report.json || true
+        license-checker --json > license-report.json
+        
+    - name: Upload dependency reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dependency-reports
+        path: |
+          backend/python-deps.json
+          backend/pip-audit-report.json
+          depcheck-report.json
+          license-report.json
+        retention-days: 7
+
+  # Quality Summary
+  quality-summary:
+    name: Quality Summary
+    runs-on: ubuntu-latest
+    needs: [frontend-quality, backend-quality, security-scan, code-analysis, docs-quality, dependency-analysis]
+    if: always()
+    
+    steps:
+    - name: Quality Results Summary
+      run: |
+        echo "## Code Quality Summary" >> $GITHUB_STEP_SUMMARY
+        echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Frontend Quality | ${{ needs.frontend-quality.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Backend Quality | ${{ needs.backend-quality.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Code Analysis | ${{ needs.code-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Documentation | ${{ needs.docs-quality.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Dependencies | ${{ needs.dependency-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
+        
+    - name: Set quality gate status
+      run: |
+        if [[ "${{ needs.frontend-quality.result }}" == "success" && 
+              "${{ needs.backend-quality.result }}" == "success" && 
+              "${{ needs.security-scan.result }}" == "success" ]]; then
+          echo "✅ Quality gate passed"
+          echo "QUALITY_GATE=passed" >> $GITHUB_ENV
+        else
+          echo "❌ Quality gate failed"
+          echo "QUALITY_GATE=failed" >> $GITHUB_ENV
+          exit 1
+        fi

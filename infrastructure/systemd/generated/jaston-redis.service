@@ -1,0 +1,56 @@
+# Jaston Real Estate Redis Server
+# Generated automatically by Jaston Real Estate Service Generator
+# DO NOT EDIT MANUALLY - Edit templates and configs instead
+
+[Unit]
+Description=Jaston Real Estate Redis Server
+After=network.target
+Wants=network.target
+Requires=network.target
+
+[Service]
+Type=notify
+User=douglas
+Group=douglas
+WorkingDirectory=/home/douglas/jaston-real-estate/infrastructure
+
+# Redis server command
+ExecStart=/usr/bin/redis-server /home/douglas/jaston-real-estate/infrastructure/config/redis.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+ExecStop=/bin/kill -SIGINT $MAINPID
+TimeoutStopSec=0
+Restart=on-failure
+RestartSec=1
+StartLimitBurst=3
+StartLimitIntervalSec=60
+
+# Environment variables
+Environment="DJANGO_SETTINGS_MODULE=jaston.settings"
+Environment="PYTHONPATH=/home/douglas/jaston-real-estate/backend"
+Environment="PATH=/home/douglas/jaston-real-estate/backend/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="DEBUG=True"
+Environment="LOG_LEVEL=DEBUG"
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=jaston-redis
+
+# Security settings
+ProtectSystem=false
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# Resource limits
+MemoryLimit=256M
+CPUQuota=50%
+TasksMax=50
+
+# Redis-specific settings
+UMask=0077
+ReadWritePaths=/var/lib/redis
+ReadWritePaths=/var/log/redis
+
+[Install]
+WantedBy=multi-user.target

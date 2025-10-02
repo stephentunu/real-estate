@@ -1,0 +1,208 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for Jaston Real Estate
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please fill out this form to help us understand your request.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please confirm the following before submitting your feature request
+      options:
+        - label: I have searched existing issues to ensure this feature hasn't been requested already
+          required: true
+        - label: I have read the [Contributing Guidelines](../CONTRIBUTING.md)
+          required: true
+        - label: This feature aligns with the project's goals and scope
+          required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: Which area does this feature relate to?
+      options:
+        - User Interface/Experience
+        - Property Management
+        - Lease Management
+        - Maintenance System
+        - Payment/Financial
+        - Messaging/Communication
+        - Reporting/Analytics
+        - Authentication/Security
+        - API/Integration
+        - Mobile Experience
+        - Performance/Optimization
+        - Accessibility
+        - Documentation
+        - Developer Experience
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Critical (Essential for business operations)
+        - High (Significantly improves user experience)
+        - Medium (Nice to have, moderate impact)
+        - Low (Minor improvement)
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What pain point are you experiencing?
+      placeholder: Describe the problem or need this feature would address...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the feature you'd like to see implemented
+      placeholder: Describe your proposed solution in detail...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative solutions or workarounds?
+      placeholder: Describe any alternative approaches you've considered...
+
+  - type: textarea
+    id: user_stories
+    attributes:
+      label: User Stories
+      description: Provide user stories that describe how this feature would be used
+      placeholder: |
+        As a [user type], I want [feature] so that [benefit].
+        
+        Example:
+        - As a property manager, I want to bulk update rent prices so that I can efficiently adjust rates across multiple properties.
+        - As a tenant, I want to receive push notifications for maintenance updates so that I stay informed about repair progress.
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What specific criteria must be met for this feature to be considered complete?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+
+  - type: checkboxes
+    id: user_types
+    attributes:
+      label: Target Users
+      description: Which user types would benefit from this feature?
+      options:
+        - label: Property Managers
+        - label: Landlords
+        - label: Tenants
+        - label: Maintenance Staff
+        - label: System Administrators
+        - label: Accountants/Financial Staff
+        - label: Real Estate Agents
+        - label: All Users
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups/Wireframes
+      description: If you have any mockups, wireframes, or visual examples, please share them
+      placeholder: Drag and drop images here or paste URLs to mockups/wireframes
+
+  - type: textarea
+    id: technical_considerations
+    attributes:
+      label: Technical Considerations
+      description: Are there any technical aspects, constraints, or requirements to consider?
+      placeholder: |
+        - Database schema changes needed
+        - API endpoints required
+        - Third-party integrations
+        - Performance considerations
+        - Security implications
+
+  - type: checkboxes
+    id: implementation_areas
+    attributes:
+      label: Implementation Areas
+      description: Which parts of the system would need to be modified?
+      options:
+        - label: Frontend (React/TypeScript)
+        - label: Backend (Django/Python)
+        - label: Database Schema
+        - label: API Endpoints
+        - label: Authentication/Authorization
+        - label: Real-time Features (WebSocket)
+        - label: Email/Notifications
+        - label: File Storage/Management
+        - label: Payment Processing
+        - label: Reporting/Analytics
+        - label: Mobile Interface
+        - label: Documentation
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Estimated Complexity
+      description: How complex do you think this feature would be to implement?
+      options:
+        - Simple (Few hours to 1 day)
+        - Medium (2-5 days)
+        - Complex (1-2 weeks)
+        - Very Complex (2+ weeks)
+        - Unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: business_value
+    attributes:
+      label: Business Value
+      description: What business value or ROI would this feature provide?
+      placeholder: |
+        - Increased user satisfaction
+        - Reduced support tickets
+        - Improved efficiency
+        - Revenue impact
+        - Competitive advantage
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any other context, research, or examples about the feature request
+      placeholder: Any additional information that might be helpful...
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you willing to contribute to this feature?
+      options:
+        - label: I can help with requirements gathering
+        - label: I can help with design/mockups
+        - label: I can help with frontend development
+        - label: I can help with backend development
+        - label: I can help with testing
+        - label: I can help with documentation
+        - label: I can provide feedback during development

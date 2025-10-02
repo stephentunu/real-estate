@@ -1,0 +1,72 @@
+{
+  "django": {
+    "name": "jaston-django",
+    "description": "Jaston Real Estate Django Backend Server",
+    "port": 8000,
+    "bind_address": "0.0.0.0",
+    "workers": 4,
+    "timeout": 30,
+    "max_requests": 1000,
+    "working_directory": "/home/douglas/jaston-real-estate/backend",
+    "exec_start": "/home/douglas/jaston-real-estate/backend/venv/bin/python manage.py runserver 0.0.0.0:8000",
+    "dependencies": ["network.target", "jaston-redis.service"],
+    "environment": {
+      "DJANGO_SETTINGS_MODULE": "jaston.settings",
+      "REDIS_URL": "redis://localhost:6379/0"
+    },
+    "resources": {
+      "memory_limit": "1G",
+      "cpu_quota": "150%"
+    }
+  },
+  "celery-worker": {
+    "name": "jaston-celery-worker",
+    "description": "Jaston Real Estate Celery Worker",
+    "concurrency": 4,
+    "loglevel": "INFO",
+    "working_directory": "/home/douglas/jaston-real-estate/backend",
+    "exec_start": "/home/douglas/jaston-real-estate/backend/venv/bin/celery -A jaston worker --loglevel=INFO --concurrency=4",
+    "dependencies": ["network.target", "jaston-redis.service", "jaston-django.service"],
+    "environment": {
+      "DJANGO_SETTINGS_MODULE": "jaston.settings",
+      "CELERY_BROKER_URL": "redis://localhost:6379/1",
+      "CELERY_RESULT_BACKEND": "redis://localhost:6379/2"
+    },
+    "resources": {
+      "memory_limit": "512M",
+      "cpu_quota": "100%"
+    }
+  },
+  "celery-beat": {
+    "name": "jaston-celery-beat",
+    "description": "Jaston Real Estate Celery Beat Scheduler",
+    "loglevel": "INFO",
+    "working_directory": "/home/douglas/jaston-real-estate/backend",
+    "exec_start": "/home/douglas/jaston-real-estate/backend/venv/bin/celery -A jaston beat --loglevel=INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler",
+    "dependencies": ["network.target", "jaston-redis.service", "jaston-django.service"],
+    "environment": {
+      "DJANGO_SETTINGS_MODULE": "jaston.settings",
+      "CELERY_BROKER_URL": "redis://localhost:6379/1",
+      "CELERY_RESULT_BACKEND": "redis://localhost:6379/2"
+    },
+    "resources": {
+      "memory_limit": "256M",
+      "cpu_quota": "50%"
+    }
+  },
+  "redis": {
+    "name": "jaston-redis",
+    "description": "Jaston Real Estate Redis Server",
+    "port": 6379,
+    "bind_address": "127.0.0.1",
+    "config_file": "/home/douglas/jaston-real-estate/infrastructure/config/redis.conf",
+    "working_directory": "/home/douglas/jaston-real-estate/infrastructure",
+    "exec_start": "/usr/bin/redis-server /home/douglas/jaston-real-estate/infrastructure/config/redis.conf",
+    "dependencies": ["network.target"],
+    "environment": {},
+    "resources": {
+      "memory_limit": "256M",
+      "cpu_quota": "50%"
+    }
+  }
+}

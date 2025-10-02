@@ -1,0 +1,167 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | Jaston Admin{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 10px; vertical-align: middle;">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="#417690"/>
+        </svg>
+        Jaston Admin
+    </a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* Custom admin styling */
+    #header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    #site-name a {
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.2em;
+    }
+    
+    #site-name a:hover {
+        color: #f0f0f0;
+    }
+    
+    .module h2, .module caption, .inline-group h2 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .button, input[type=submit], input[type=button], .submit-row input, a.button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+    
+    .button:hover, input[type=submit]:hover, input[type=button]:hover, .submit-row input:hover, a.button:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .dashboard #content {
+        width: auto;
+    }
+    
+    .dashboard .module table {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .dashboard .module {
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    /* Enhanced table styling */
+    .results table {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .results th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .results tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .results tr:hover {
+        background-color: #e3f2fd;
+        transition: background-color 0.3s ease;
+    }
+    
+    /* Form styling */
+    .form-row {
+        margin-bottom: 15px;
+    }
+    
+    .form-row label {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    input[type="text"], input[type="email"], input[type="password"], 
+    input[type="number"], textarea, select {
+        border: 2px solid #e0e0e0;
+        border-radius: 4px;
+        padding: 8px 12px;
+        transition: border-color 0.3s ease;
+    }
+    
+    input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus,
+    input[type="number"]:focus, textarea:focus, select:focus {
+        border-color: #667eea;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    /* Breadcrumbs */
+    .breadcrumbs {
+        background: #f8f9fa;
+        border-radius: 4px;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+    }
+    
+    .breadcrumbs a {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .breadcrumbs a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Messages */
+    .messagelist {
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .messagelist .success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+    
+    .messagelist .error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+    
+    .messagelist .warning {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+    }
+</style>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23417690' d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'/%3E%3C/svg%3E">
+{% endblock %}

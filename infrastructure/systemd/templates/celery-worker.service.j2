@@ -1,0 +1,112 @@
+# {{ service.description }}
+# Generated automatically by Jaston Real Estate Service Generator
+# DO NOT EDIT MANUALLY - Edit templates and configs instead
+
+[Unit]
+Description={{ service.description }}
+After={{ service.dependencies | join(' ') }}
+Wants={{ service.dependencies | join(' ') }}
+{% if service.dependencies %}
+Requires={{ service.dependencies | join(' ') }}
+{% endif %}
+
+[Service]
+Type=simple
+User={{ project.user }}
+Group={{ project.group }}
+WorkingDirectory={{ service.working_directory }}
+
+# Celery worker command
+ExecStart={{ service.exec_start }}
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill -TERM $MAINPID
+
+# Restart policy
+Restart={{ restart.policy }}
+RestartSec={{ restart.delay_sec }}
+{% if restart.max_retries is defined %}
+StartLimitBurst={{ restart.max_retries }}
+StartLimitIntervalSec=60
+{% endif %}
+
+# Environment variables
+{% for key, value in environment.items() %}
+Environment="{{ key }}={{ value }}"
+{% endfor %}
+{% for key, value in service.environment.items() %}
+Environment="{{ key }}={{ value }}"
+{% endfor %}
+
+# Celery-specific environment
+Environment="PYTHONUNBUFFERED=1"
+Environment="C_FORCE_ROOT=1"
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ service.name }}
+
+# Security settings
+{% if security.no_new_privileges %}
+NoNewPrivileges={{ security.no_new_privileges | lower }}
+{% endif %}
+{% if security.protect_system %}
+ProtectSystem={{ security.protect_system }}
+{% endif %}
+{% if security.protect_home %}
+ProtectHome={{ security.protect_home | lower }}
+{% endif %}
+{% if security.private_tmp %}
+PrivateTmp={{ security.private_tmp | lower }}
+{% endif %}
+{% if security.private_devices %}
+PrivateDevices={{ security.private_devices | lower }}
+{% endif %}
+{% if security.protect_kernel_tunables %}
+ProtectKernelTunables={{ security.protect_kernel_tunables | lower }}
+{% endif %}
+{% if security.protect_kernel_modules %}
+ProtectKernelModules={{ security.protect_kernel_modules | lower }}
+{% endif %}
+{% if security.protect_control_groups %}
+ProtectControlGroups={{ security.protect_control_groups | lower }}
+{% endif %}
+{% if security.restrict_address_families is defined %}
+RestrictAddressFamilies={{ security.restrict_address_families }}
+{% endif %}
+{% if security.restrict_namespaces is defined %}
+RestrictNamespaces={{ security.restrict_namespaces | lower }}
+{% endif %}
+{% if security.lock_personality is defined %}
+LockPersonality={{ security.lock_personality | lower }}
+{% endif %}
+{% if security.memory_deny_write_execute is defined %}
+MemoryDenyWriteExecute={{ security.memory_deny_write_execute | lower }}
+{% endif %}
+{% if security.restrict_realtime is defined %}
+RestrictRealtime={{ security.restrict_realtime | lower }}
+{% endif %}
+{% if security.restrict_suid_sgid is defined %}
+RestrictSUIDSGID={{ security.restrict_suid_sgid | lower }}
+{% endif %}
+{% if security.remove_ipc is defined %}
+RemoveIPC={{ security.remove_ipc | lower }}
+{% endif %}
+
+# Resource limits
+{% if service.resources.memory_limit is defined %}
+MemoryLimit={{ service.resources.memory_limit }}
+{% else %}
+MemoryLimit={{ resources.memory_limit }}
+{% endif %}
+{% if service.resources.cpu_quota is defined %}
+CPUQuota={{ service.resources.cpu_quota }}
+{% else %}
+CPUQuota={{ resources.cpu_quota }}
+{% endif %}
+{% if resources.tasks_max is defined %}
+TasksMax={{ resources.tasks_max }}
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target
