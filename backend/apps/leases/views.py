@@ -29,14 +29,22 @@ class LeaseTemplateViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Get lease templates with visibility filtering."""
+        # Handle Swagger schema generation
+        if getattr(self, 'swagger_fake_view', False):
+            return LeaseTemplate.objects.none()
+        
         queryset = LeaseTemplate.objects.select_related('created_by')
         
         user = self.request.user
         
         # Users can see their own templates and public templates
-        queryset = queryset.filter(
-            Q(created_by=user) | Q(is_public=True)
-        )
+        if user.is_authenticated:
+            queryset = queryset.filter(
+                Q(created_by=user) | Q(is_public=True)
+            )
+        else:
+            # Unauthenticated users can only see public templates
+            queryset = queryset.filter(is_public=True)
         
         # Exclude soft deleted items unless specifically requested
         if not self.request.query_params.get('include_deleted'):

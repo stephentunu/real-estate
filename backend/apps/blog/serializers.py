@@ -36,9 +36,9 @@ class BlogCategorySerializer(serializers.ModelSerializer):
         model = BlogCategory
         fields = [
             'id', 'name', 'slug', 'description', 'color',
-            'posts_count', 'created_at', 'updated_at'
+            'posts_count'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'posts_count']
+        read_only_fields = ['id', 'slug', 'posts_count']
     
     def get_posts_count(self, obj):
         """Get the number of published posts in this category"""

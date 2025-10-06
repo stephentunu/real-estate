@@ -1,13 +1,12 @@
 """
 Custom middleware for the Jaston Real Estate API.
-
 This module provides middleware to handle API-specific concerns like
 JSON error responses for API endpoints even when DEBUG=True.
 """
-
 from typing import Callable, Optional
 from django.http import HttpRequest, HttpResponse, JsonResponse, Http404
 from django.urls import resolve, Resolver404
+from rest_framework.exceptions import APIException
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,6 +19,8 @@ class APIErrorMiddleware:
     This middleware ensures that API endpoints (paths starting with /api/)
     return JSON error responses instead of HTML, even when DEBUG=True.
     """
+
+    
     
     def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
         """
@@ -40,44 +41,25 @@ class APIErrorMiddleware:
         Returns:
             HttpResponse object, potentially modified for API errors.
         """
-        # Check if this is an API request
-        if request.path.startswith('/api/'):
-            try:
-                # Try to resolve the URL
-                resolve(request.path)
-            except Resolver404:
-                # Return JSON 404 for API endpoints
-                response_data = {
-                    'error': True,
-                    'message': 'Resource not found',
-                    'details': {
-                        'detail': 'The requested API endpoint was not found.',
-                        'path': request.path
-                    },
-                    'status_code': 404
-                }
-                logger.warning(f"API 404 error for path: {request.path}")
-                return JsonResponse(response_data, status=404)
-        
-        # Process the request normally
+        # Process the request normally first - let DRF handle versioning
         response = self.get_response(request)
         
         # Handle API responses that might be HTML errors
         if (request.path.startswith('/api/') and 
-            response.status_code == 404 and 
+            response.status_code >= 400 and 
             response.get('Content-Type', '').startswith('text/html')):
             
             response_data = {
                 'error': True,
-                'message': 'Resource not found',
+                'message': 'Resource not found' if response.status_code == 404 else 'An error occurred',
                 'details': {
-                    'detail': 'The requested API endpoint was not found.',
+                    'detail': 'The requested API endpoint was not found.' if response.status_code == 404 else 'An error occurred processing your request.',
                     'path': request.path
                 },
-                'status_code': 404
+                'status_code': response.status_code
             }
-            logger.warning(f"Converting HTML 404 to JSON for API path: {request.path}")
-            return JsonResponse(response_data, status=404)
+            logger.warning(f"Converting HTML {response.status_code} to JSON for API path: {request.path}")
+            return JsonResponse(response_data, status=response.status_code)
         
         return response
     
