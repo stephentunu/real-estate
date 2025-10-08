@@ -31,3 +31,11 @@ backend/.env
 *.njsproj
 *.sln
 *.sw?
+
+#changes before commit
+backend/*.sqlite3
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/venv/
+.env
+
