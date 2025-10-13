@@ -29,10 +29,11 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
-    "drf_yasg",
     "channels",
     "django_filters",
     "django_extensions",
+    # ✅ Replaced drf_yasg with drf_spectacular
+    "drf_spectacular",
     "apps.core",
     "apps.users",
     "apps.properties",
@@ -103,7 +104,6 @@ CACHES = get_cache_config()
 for cache_name, cache_cfg in CACHES.items():
     location = cache_cfg.get('LOCATION')
     if location and location.startswith('redis://localhost:6379'):
-        # replace port 6379 with 6380
         CACHES[cache_name]['LOCATION'] = location.replace('6379', '6380')
 
 # Session
@@ -170,18 +170,31 @@ LOGIN_REDIRECT_URL = auth_cfg.get('LOGIN_REDIRECT_URL')
 LOGOUT_REDIRECT_URL = auth_cfg.get('LOGOUT_REDIRECT_URL')
 PASSWORD_RESET_TIMEOUT = auth_cfg.get('PASSWORD_RESET_TIMEOUT')
 
-# DRF & Swagger
-from config.drf_config import get_drf_config, get_swagger_config
+# ✅ REST Framework & Spectacular
+from config.drf_config import get_drf_config
 REST_FRAMEWORK = get_drf_config()
-swagger_cfg = get_swagger_config()
-SWAGGER_SETTINGS = swagger_cfg.get('SWAGGER_SETTINGS')
-REDOC_SETTINGS = swagger_cfg.get('REDOC_SETTINGS')
+REST_FRAMEWORK.update({
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+})
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Jaston Real Estate API",
+    "DESCRIPTION": "API documentation for the Jaston Real Estate platform",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": r"/api/v[0-9]",
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "displayOperationId": True,
+        "persistAuthorization": True,
+    },
+}
 
 # Channels
 from config.channels_config import get_channels_config
 channels_cfg = get_channels_config()
 CHANNEL_LAYERS = channels_cfg.get('CHANNEL_LAYERS')
-# Update Redis port for Channels
 for layer_name, layer_cfg in CHANNEL_LAYERS.items():
     hosts = layer_cfg.get('CONFIG', {}).get('hosts', [])
     new_hosts = []
@@ -196,8 +209,8 @@ ASGI_APPLICATION = channels_cfg.get('ASGI_APPLICATION', ASGI_APPLICATION)
 # Celery
 from config.celery_config import get_celery_config
 CELERY_CONFIG = get_celery_config()
-CELERY_BROKER_URL = CELERY_CONFIG.get('broker_url').replace('6379', '6380')
-CELERY_RESULT_BACKEND = CELERY_CONFIG.get('result_backend').replace('6379', '6380')
+CELERY_BROKER_URL = CELERY_CONFIG.get('broker_url', '').replace('6379', '6380')
+CELERY_RESULT_BACKEND = CELERY_CONFIG.get('result_backend', '').replace('6379', '6380')
 CELERY_ACCEPT_CONTENT = CELERY_CONFIG.get('accept_content')
 CELERY_TASK_SERIALIZER = CELERY_CONFIG.get('task_serializer')
 CELERY_RESULT_SERIALIZER = CELERY_CONFIG.get('result_serializer')
