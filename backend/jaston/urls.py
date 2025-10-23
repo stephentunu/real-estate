@@ -1,23 +1,50 @@
+"""
+Project URL configuration for Jaston.
+
+Exports:
+- admin panel
+- explicit auth endpoints (register / login / logout / me / user list)
+- drf-spectacular schema + docs
+- app-level api v1 includes
+- static/media serving in DEBUG
+"""
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
 
+# Import explicit auth views from apps.users (based on the views you provided)
+from apps.users import views as user_views
+
 urlpatterns = [
     # ------------------------
-    # Admin Panel
+    # Admin panel
     # ------------------------
     path("admin/", admin.site.urls),
 
     # ------------------------
-    # Authentication
+    # Explicit authentication endpoints (useful for frontend)
     # ------------------------
-    path("api/auth/", include("rest_framework.urls")),
+    # POST   /api/auth/register/   -> register a new user
+    # POST   /api/auth/login/      -> login (token)
+    # POST   /api/auth/logout/     -> logout (requires auth)
+    # GET    /api/auth/me/         -> current user (requires auth)
+    # GET    /api/auth/users/      -> list users (admin only)
+    path("api/auth/register/", user_views.UserRegistrationView.as_view(), name="auth-register"),
+    path("api/auth/login/", user_views.UserLoginView.as_view(), name="auth-login"),
+    path("api/auth/logout/", user_views.UserLogoutView.as_view(), name="auth-logout"),
+    path("api/auth/me/", user_views.CurrentUserView.as_view(), name="auth-current-user"),
+    path("api/auth/users/", user_views.UserListView.as_view(), name="auth-user-list"),
+
+    # Optional: keep DRF browsable auth under a separate prefix if desired
+    path("api/auth/drf/", include("rest_framework.urls")),
 
     # ------------------------
     # API Schema & Documentation (drf-spectacular)
@@ -35,7 +62,7 @@ urlpatterns = [
     ),
 
     # ------------------------
-    # API v1 Endpoints
+    # API v1 endpoints (app includes / routers)
     # ------------------------
     path("api/v1/users/", include(("apps.users.urls", "users"), namespace="users")),
     path("api/v1/properties/", include(("apps.properties.urls", "properties"), namespace="properties")),
@@ -54,7 +81,7 @@ urlpatterns = [
 ]
 
 # ------------------------
-# Custom Error Handlers
+# Custom error handlers
 # ------------------------
 handler404 = "jaston.handlers.handler404"
 handler400 = "jaston.handlers.handler400"
@@ -62,7 +89,7 @@ handler403 = "jaston.handlers.handler403"
 handler500 = "jaston.handlers.handler500"
 
 # ------------------------
-# Serve static & media files in development
+# Serve media & static files during development
 # ------------------------
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

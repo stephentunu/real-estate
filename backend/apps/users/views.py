@@ -88,6 +88,7 @@ class UserLogoutView(generics.GenericAPIView):
     """
     API endpoint for user logout
     """
+    serializer_class = None  # ✅ Added to fix the drf-spectacular schema warning
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
@@ -103,6 +104,7 @@ class UserLogoutView(generics.GenericAPIView):
         return Response({
             'message': 'Logout successful'
         }, status=status.HTTP_200_OK)
+
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):

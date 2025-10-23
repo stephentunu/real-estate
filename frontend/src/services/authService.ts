@@ -84,30 +84,23 @@ export const authService = {
   /**
    * Login user with email and password
    */
-  async login(data: LoginData): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/users/login/', data, {
-      requiresAuth: false,
-    });
-    
-    // Store authentication token
-    apiClient.setToken(response.token);
-    
-    return response;
-  },
+  // Update login/register endpoints to match Django backend
+async login(data: LoginData): Promise<AuthResponse> {
+  const response = await apiClient.post<AuthResponse>('/api/v1/users/login/', data, {
+    requiresAuth: false,
+  });
+  apiClient.setToken(response.token);
+  return response;
+},
 
-  /**
-   * Register new user
-   */
-  async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/users/register/', data, {
-      requiresAuth: false,
-    });
-    
-    // Store authentication token
-    apiClient.setToken(response.token);
-    
-    return response;
-  },
+async register(data: RegisterData): Promise<AuthResponse> {
+  const response = await apiClient.post<AuthResponse>('/api/v1/users/register/', data, {
+    requiresAuth: false,
+  });
+  apiClient.setToken(response.token);
+  return response;
+},
+
 
   /**
    * Logout user and clear authentication
