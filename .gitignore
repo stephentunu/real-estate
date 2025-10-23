@@ -39,3 +39,17 @@ backend/**/*.pyc
 backend/venv/
 .env
 
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+
+# Node / React
+node_modules/
+dist/
+.env
+
+# Misc
+*.log
+
+
