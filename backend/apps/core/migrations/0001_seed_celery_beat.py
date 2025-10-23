@@ -88,7 +88,7 @@ def json_dump(obj):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_celery_beat', '0003_auto__'),
+('django_celery_beat', '0001_initial'),
     ]
 
     operations = [

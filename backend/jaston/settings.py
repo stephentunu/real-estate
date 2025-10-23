@@ -20,6 +20,7 @@ ALLOWED_HOSTS = server_config.allowed_hosts
 
 INSTALLED_APPS = [
     "daphne",
+    "django_celery_beat",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -265,7 +266,7 @@ performance_cfg = get_performance_config()
 DATA_UPLOAD_MAX_NUMBER_FIELDS = performance_cfg.get('DATA_UPLOAD_MAX_NUMBER_FIELDS')
 DATA_UPLOAD_MAX_MEMORY_SIZE = performance_cfg.get('DATA_UPLOAD_MAX_MEMORY_SIZE')
 FILE_UPLOAD_MAX_MEMORY_SIZE = performance_cfg.get('FILE_UPLOAD_MAX_MEMORY_SIZE')
-DEFAULT_AUTO_FIELD = performance_cfg.get('DEFAULT_AUTO_FIELD')
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 USE_THOUSAND_SEPARATOR = performance_cfg.get('USE_THOUSAND_SEPARATOR')
 NUMBER_GROUPING = performance_cfg.get('NUMBER_GROUPING')
 
