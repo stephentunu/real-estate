@@ -52,4 +52,32 @@ dist/
 # Misc
 *.log
 
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+
+# Django
+/staticfiles/
+/media/
+
+# Node / React
+node_modules/
+dist/
+.env
+.vite/
+.next/
+build/
+coverage/
+
+# Logs
+*.log
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+
 
