@@ -13,7 +13,7 @@ from .views import (
 
 # Create a router and register our viewsets with it
 router = DefaultRouter()
-router.register(r'properties', PropertyViewSet)
+router.register(r'', PropertyViewSet)
 router.register(r'property-types', PropertyTypeViewSet)
 router.register(r'property-statuses', PropertyStatusViewSet)
 router.register(r'property-images', PropertyImageViewSet)
@@ -25,6 +25,4 @@ router.register(r'saved-properties', SavedPropertyViewSet)
 # The API URLs are now determined automatically by the router
 urlpatterns = [
     path('', include(router.urls)),
-    # Manual URL patterns for custom actions
-    path('featured/', PropertyViewSet.as_view({'get': 'featured'}), name='property-featured'),
 ]

@@ -15,7 +15,7 @@ security_config = env_loader.get_security_config()
 server_config = env_loader.get_server_config()
 
 SECRET_KEY = security_config.secret_key
-DEBUG = security_config.debug
+DEBUG = True
 ALLOWED_HOSTS = server_config.allowed_hosts
 
 INSTALLED_APPS = [
