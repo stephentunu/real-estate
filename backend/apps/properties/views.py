@@ -6,6 +6,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
+from apps.properties.models import Favorite
+
 
 from .models import Property, PropertyType, PropertyStatus, PropertyImage, PropertyFeature, SavedProperty, Amenity, PropertyAmenity
 from .serializers import (
@@ -216,24 +218,25 @@ class PropertyViewSet(viewsets.ModelViewSet):
         """
         Get featured properties
         """
-        try:
-            limit = request.query_params.get('limit', None)
-            queryset = self.get_queryset().filter(is_featured=True)
+        #block commented out temporarily for debugging. uncomment when needed.
+        #try:
+        limit = request.query_params.get('limit', None)
+        queryset = self.get_queryset().filter(is_featured=True)
             
-            if limit:
+        if limit:
                 try:
                     limit = int(limit)
                     queryset = queryset[:limit]
                 except ValueError:
                     pass
             
-            serializer = PropertyListSerializer(queryset, many=True, context={'request': request})
-            return Response(serializer.data)
-        except Exception as e:
-            return Response(
-                {'error': f'Failed to fetch featured properties: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        serializer = PropertyListSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+        #except Exception as e:
+            #return Response(
+                #{'error': f'Failed to fetch featured properties: {str(e)}'}, 
+                #status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
 
 class PropertyImageViewSet(viewsets.ModelViewSet):

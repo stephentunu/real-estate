@@ -618,3 +618,6 @@ class SavedProperty(models.Model):
     
     def __str__(self):
         return f"{self.user.get_full_name()} saved {self.property.title}"
+class Favorite(SavedProperty):
+    class Meta:
+        proxy = True

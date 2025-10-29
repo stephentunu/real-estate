@@ -16,7 +16,7 @@ server_config = env_loader.get_server_config()
 
 SECRET_KEY = security_config.secret_key
 DEBUG = True
-ALLOWED_HOSTS = server_config.allowed_hosts
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "daphne",
@@ -278,3 +278,13 @@ ADMIN_INDEX_TITLE = 'Welcome to Jaston Administration'
 LOGGING = get_logging_config()
 ADMINS = admin_config['ADMINS']
 MANAGERS = admin_config['MANAGERS']
+
+#for debugging purposes
+
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+}
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,  # You can adjust this number
+}

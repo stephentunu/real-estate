@@ -12,7 +12,7 @@ import {
 import { handleAPIError } from './errorHandler'
 import { retryFetch } from '../utils/retryUtils'
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 // Types
 export interface PropertyType {
