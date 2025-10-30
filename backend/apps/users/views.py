@@ -12,6 +12,14 @@ from .serializers import (
     UserSerializer, UserProfileSerializer, UserRegistrationSerializer,
     UserLoginSerializer, UserProfileUpdateSerializer, PasswordChangeSerializer
 )
+from django.http import JsonResponse
+
+
+def healt_check(request):
+    if request.method == "GET":
+        return JsonResponse({"status": "Running"})
+    else:
+        return JsonResponse({"error": "invalid response"}, status=405)
 
 
 @method_decorator(csrf_exempt, name='dispatch')

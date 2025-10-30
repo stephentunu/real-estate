@@ -18,4 +18,5 @@ urlpatterns = [
     # User management endpoints
     path('me/', views.CurrentUserView.as_view(), name='current-user'),
     path('list/', views.UserListView.as_view(), name='user-list'),
+    path("health/", views.healt_check, name="healt_chec")
 ]

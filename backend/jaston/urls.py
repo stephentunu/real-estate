@@ -31,17 +31,17 @@ urlpatterns = [
 
     # ------------------------
     # Explicit authentication endpoints (useful for frontend)
-    # ------------------------
+    # ------------------------r
     # POST   /api/auth/register/   -> register a new user
     # POST   /api/auth/login/      -> login (token)
     # POST   /api/auth/logout/     -> logout (requires auth)
     # GET    /api/auth/me/         -> current user (requires auth)
     # GET    /api/auth/users/      -> list users (admin only)
-    path("api/auth/register/", user_views.UserRegistrationView.as_view(), name="auth-register"),
-    path("api/auth/login/", user_views.UserLoginView.as_view(), name="auth-login"),
-    path("api/auth/logout/", user_views.UserLogoutView.as_view(), name="auth-logout"),
-    path("api/auth/me/", user_views.CurrentUserView.as_view(), name="auth-current-user"),
-    path("api/auth/users/", user_views.UserListView.as_view(), name="auth-user-list"),
+    # path("api/auth/register/", user_views.UserRegistrationView.as_view(), name="auth-register"),
+    # path("api/auth/login/", user_views.UserLoginView.as_view(), name="auth-login"),
+    # path("api/auth/logout/", user_views.UserLogoutView.as_view(), name="auth-logout"),
+    # path("api/auth/me/", user_views.CurrentUserView.as_view(), name="auth-current-user"),
+    # path("api/auth/users/", user_views.UserListView.as_view(), name="auth-user-list"),
 
     # Optional: keep DRF browsable auth under a separate prefix if desired
     path("api/auth/drf/", include("rest_framework.urls")),

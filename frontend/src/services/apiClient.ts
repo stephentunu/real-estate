@@ -3,14 +3,21 @@
  * Provides consistent request handling with proper authentication and error handling
  */
 
-import { handleError, retryRequest } from '../utils/errorHandler';
-import { APIValidationError, APIError, NetworkError, AuthenticationError } from './errors';
-import { healthService } from './healthService';
+import { handleError, retryRequest } from "../utils/errorHandler";
+import {
+  APIValidationError,
+  APIError,
+  NetworkError,
+  AuthenticationError,
+} from "./errors";
+import { healthService } from "./healthService";
 
-// API Configuration
+// -------------------------
+// API CONFIGURATION
+// -------------------------
 const API_CONFIG = {
-  baseURL: 'http://localhost:8000/api/v1',
-  timeout: 30000,
+  baseURL: "http://127.0.0.1:8000/api/v1/", // ✅ Ensure only one /api/v1 here
+  timeout: 20000,
   retries: 3,
   retryDelay: 1000,
 };
@@ -22,19 +29,12 @@ export interface APIResponse<T = unknown> {
   headers: Record<string, string>;
 }
 
-export interface PaginatedResponse<T> {
-  count: number;
-  next?: string;
-  previous?: string;
-  results: T[];
-}
-
 export interface RequestConfig {
-  [key: string]: unknown; // Add index signature for compatibility
+  [key: string]: unknown;
   headers?: Record<string, string>;
   params?: Record<string, unknown>;
   timeout?: number;
-  responseType?: 'json' | 'blob' | 'text';
+  responseType?: "json" | "blob" | "text";
   retry?: boolean;
   retryCount?: number;
   retryDelay?: number;
@@ -42,196 +42,67 @@ export interface RequestConfig {
 }
 
 /**
- * Interceptor types
- */
-interface RequestInterceptor {
-  (config: RequestConfig): RequestConfig | Promise<RequestConfig>;
-}
-
-interface ResponseInterceptor {
-  (response: APIResponse<unknown>): APIResponse<unknown> | Promise<APIResponse<unknown>>;
-}
-
-interface ErrorInterceptor {
-  (error: unknown): unknown | Promise<unknown>;
-}
-
-/**
- * API Client class with proper type safety
+ * API Client
  */
 class APIClient {
   private baseURL: string;
   private timeout: number;
   private retries: number;
   private retryDelay: number;
-  private requestInterceptors: RequestInterceptor[] = [];
-  private responseInterceptors: ResponseInterceptor[] = [];
-  private errorInterceptors: ErrorInterceptor[] = [];
 
   constructor(config: typeof API_CONFIG) {
-    this.baseURL = config.baseURL;
+    this.baseURL = config.baseURL.replace(/\/+$/, ""); // Remove trailing slashes
     this.timeout = config.timeout;
     this.retries = config.retries;
     this.retryDelay = config.retryDelay;
   }
 
   /**
-   * Interceptor management
-   */
-  public interceptors = {
-    request: {
-      use: (interceptor: RequestInterceptor) => {
-        this.requestInterceptors.push(interceptor);
-      },
-    },
-    response: {
-      use: (onFulfilled?: ResponseInterceptor, onRejected?: ErrorInterceptor) => {
-        if (onFulfilled) this.responseInterceptors.push(onFulfilled);
-        if (onRejected) this.errorInterceptors.push(onRejected);
-      },
-    },
-  };
-
-  /**
-   * Build full URL from endpoint
+   * Build URL safely
+   * Avoids double /api/v1/api/v1
    */
   private buildURL(endpoint: string): string {
-    return `${this.baseURL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    let cleanEndpoint = endpoint.trim();
+
+    // Remove any leading /api or /api/v1 duplication from frontend calls
+    cleanEndpoint = cleanEndpoint.replace(/^\/?api(\/v1)?\//, "");
+
+    // Ensure leading slash for consistent joining
+    if (!cleanEndpoint.startsWith("/")) {
+      cleanEndpoint = "/" + cleanEndpoint;
+    }
+
+    return `${this.baseURL}${cleanEndpoint}`;
   }
 
   /**
-   * Get authentication headers
+   * Get auth headers
    */
   private getAuthHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
     const token = this.getAuthToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+    if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    const csrfToken = this.getCSRFToken();
-    if (csrfToken) {
-      headers['X-CSRFToken'] = csrfToken;
-    }
+    const csrf = this.getCSRFToken();
+    if (csrf) headers["X-CSRFToken"] = csrf;
 
     return headers;
   }
 
-  /**
-   * Get CSRF token from cookies
-   */
   private getCSRFToken(): string | null {
-    const cookies = document.cookie.split(';');
+    const cookies = document.cookie.split(";");
     for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      if (name === 'csrftoken') {
-        return decodeURIComponent(value);
-      }
+      const [name, value] = cookie.trim().split("=");
+      if (name === "csrftoken") return decodeURIComponent(value);
     }
     return null;
   }
 
   /**
-   * Build query string from parameters
-   */
-  private buildQueryString(params?: Record<string, unknown>): string {
-    if (!params || Object.keys(params).length === 0) {
-      return '';
-    }
-
-    const searchParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        searchParams.append(key, String(value));
-      }
-    });
-
-    return searchParams.toString();
-  }
-
-  /**
-   * Handle response parsing with proper type safety
-   */
-  private async handleResponse(response: Response): Promise<unknown> {
-    const contentType = response.headers.get('content-type') || '';
-    
-    if (!response.ok) {
-      let errorData: unknown;
-      
-      try {
-        if (contentType.includes('application/json')) {
-          errorData = await response.json();
-        } else {
-          errorData = { message: await response.text() };
-        }
-      } catch {
-        errorData = { message: `HTTP ${response.status}: ${response.statusText}` };
-      }
-
-      // Handle different error types
-      if (response.status === 401) {
-        throw new AuthenticationError(
-          'Authentication required',
-          response.status,
-          errorData as Record<string, unknown>
-        );
-      } else if (response.status === 400) {
-        throw new APIValidationError(
-          'Validation failed',
-          {},
-          response.status
-        );
-      } else {
-        throw new APIError(
-          `Request failed with status ${response.status}`,
-          response.status,
-          'API_ERROR',
-          errorData as Record<string, unknown>
-        );
-      }
-    }
-
-    // Parse successful response
-    if (contentType.includes('application/json')) {
-      return await response.json();
-    } else if (contentType.includes('text/')) {
-      return await response.text();
-    } else {
-      return await response.blob();
-    }
-  }
-
-  /**
-   * Apply request interceptors
-   */
-  private async applyRequestInterceptors(config: RequestConfig): Promise<RequestConfig> {
-    let processedConfig = config;
-    
-    for (const interceptor of this.requestInterceptors) {
-      processedConfig = await interceptor(processedConfig);
-    }
-    
-    return processedConfig;
-  }
-
-  /**
-   * Apply response interceptors
-   */
-  private async applyResponseInterceptors(response: APIResponse<unknown>): Promise<APIResponse<unknown>> {
-    let modifiedResponse = response;
-    
-    for (const interceptor of this.responseInterceptors) {
-      modifiedResponse = await interceptor(modifiedResponse);
-    }
-    
-    return modifiedResponse;
-  }
-
-  /**
-   * Make HTTP request with interceptors
+   * Main request handler
    */
   private async request<T>(
     method: string,
@@ -239,227 +110,134 @@ class APIClient {
     data?: unknown,
     config?: RequestConfig
   ): Promise<T> {
+    const url = this.buildURL(endpoint);
+
+    // ✅ Health check with graceful handling
+    let isHealthy = false;
     try {
-      // Check backend health before making any API calls
-      const isHealthy = await healthService.isBackendHealthy();
-      if (!isHealthy) {
+      isHealthy = await healthService.isBackendHealthy();
+    } catch (err) {
+      console.warn("Health check skipped (timeout or network issue):", err);
+    }
+
+    if (!isHealthy) {
+      throw new APIError(
+        "Backend is not healthy. Request cancelled to prevent failures.",
+        503,
+        "BACKEND_UNHEALTHY"
+      );
+    }
+
+    const headers = { ...this.getAuthHeaders(), ...(config?.headers || {}) };
+
+    let body: BodyInit | null = null;
+    if (data instanceof FormData) {
+      delete headers["Content-Type"];
+      body = data;
+    } else if (data && typeof data === "object") {
+      body = JSON.stringify(data);
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      config?.timeout || this.timeout
+    );
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers,
+        body: method !== "GET" ? body : undefined,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const contentType = response.headers.get("content-type") || "";
+
+      if (!response.ok) {
+        let errorData: any = {};
+        try {
+          errorData = contentType.includes("json")
+            ? await response.json()
+            : { message: await response.text() };
+        } catch {
+          errorData = { message: response.statusText };
+        }
+
+        if (response.status === 401)
+          throw new AuthenticationError("Unauthorized", 401, errorData);
+        if (response.status === 400)
+          throw new APIValidationError("Bad Request", {}, 400);
         throw new APIError(
-          'Backend is not healthy. Request cancelled to prevent failures.',
-          503,
-          'BACKEND_UNHEALTHY',
-          { healthStatus: 'unhealthy' }
+          `HTTP ${response.status}: ${response.statusText}`,
+          response.status,
+          "API_ERROR",
+          errorData
         );
       }
 
-      // Apply request interceptors
-      const processedConfig = await this.applyRequestInterceptors(config || {});
-      
-      const url = this.buildURL(endpoint);
-      const headers = { ...this.getAuthHeaders(), ...processedConfig.headers };
-      
-      // Handle FormData and other body types
-      let body: BodyInit | null = null;
-      if (data instanceof FormData) {
-        // Remove Content-Type header for FormData to let browser set boundary
-        delete headers['Content-Type'];
-        body = data;
-      } else if (data && typeof data === 'object') {
-        body = JSON.stringify(data);
-      } else if (typeof data === 'string') {
-        body = data;
+      if (contentType.includes("application/json")) {
+        return (await response.json()) as T;
+      }
+      if (contentType.includes("text/")) {
+        return (await response.text()) as T;
       }
 
-      // Build query string for GET requests
-      let finalUrl = url;
-      if (method === 'GET' && processedConfig.params) {
-        const queryString = this.buildQueryString(processedConfig.params);
-        finalUrl += (queryString ? `?${queryString}` : '');
+      return (await response.blob()) as T;
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        throw new NetworkError("Request timed out", 408);
       }
-
-      const fetchOptions: RequestInit = {
-        method,
-        headers,
-        body: method !== 'GET' ? body : undefined,
-      };
-
-      // Add timeout using AbortController
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), processedConfig.timeout || this.timeout);
-      
-      fetchOptions.signal = controller.signal;
-
-      const response = await fetch(finalUrl, fetchOptions);
-      clearTimeout(timeoutId);
-
-      const responseData = await this.handleResponse(response);
-      const apiResponse: APIResponse<unknown> = {
-        data: responseData,
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-      };
-
-      // Apply response interceptors
-      const processedResponse = await this.applyResponseInterceptors(apiResponse);
-      
-      return processedResponse.data as T;
-    } catch (error) {
-      // Apply error interceptors
-      let processedError = error;
-      for (const interceptor of this.errorInterceptors) {
-        const result = interceptor(processedError);
-        // Handle both sync and async interceptors
-        if (result && typeof result === 'object' && 'then' in result && typeof result.then === 'function') {
-          const awaitedResult = await result;
-          if (awaitedResult !== undefined) {
-            processedError = awaitedResult;
-          }
-        } else if (result !== undefined) {
-          processedError = result;
-        }
-        // If result is undefined, keep the original processedError
-      }
-      throw processedError;
+      throw handleError(error);
     }
   }
 
-  /**
-   * GET request
-   */
   async get<T>(endpoint: string, config?: RequestConfig): Promise<T> {
-    const requestFn = () => this.request<T>('GET', endpoint, undefined, config);
-    
-    if (config?.retry !== false) {
-      return retryRequest(requestFn, {
-        retries: config?.retryCount || this.retries,
-        delay: config?.retryDelay || this.retryDelay,
-      });
-    }
-    
-    return requestFn();
+    const fn = () => this.request<T>("GET", endpoint, undefined, config);
+    return config?.retry === false
+      ? fn()
+      : retryRequest(fn, {
+          retries: config?.retryCount || this.retries,
+          delay: config?.retryDelay || this.retryDelay,
+        });
   }
 
-  /**
-   * POST request
-   */
   async post<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
-    return this.request<T>('POST', endpoint, data, config);
+    return this.request<T>("POST", endpoint, data, config);
   }
 
-  /**
-   * PUT request
-   */
   async put<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
-    return this.request<T>('PUT', endpoint, data, config);
+    return this.request<T>("PUT", endpoint, data, config);
   }
 
-  /**
-   * PATCH request
-   */
   async patch<T>(endpoint: string, data?: unknown, config?: RequestConfig): Promise<T> {
-    return this.request<T>('PATCH', endpoint, data, config);
+    return this.request<T>("PATCH", endpoint, data, config);
   }
 
-  /**
-   * DELETE request
-   */
   async delete<T>(endpoint: string, config?: RequestConfig): Promise<T> {
-    return this.request<T>('DELETE', endpoint, undefined, config);
+    return this.request<T>("DELETE", endpoint, undefined, config);
   }
 
-  /**
-   * Upload file
-   */
-  async upload<T>(endpoint: string, file: File, fieldName: string = 'file', additionalData?: Record<string, unknown>): Promise<T> {
-    const formData = new FormData();
-    formData.append(fieldName, file);
-    
-    if (additionalData) {
-      Object.entries(additionalData).forEach(([key, value]) => {
-        if (value instanceof Blob) {
-          formData.append(key, value);
-        } else {
-          formData.append(key, String(value));
-        }
-      });
-    }
-
-    return this.post<T>(endpoint, formData);
-  }
-
-  /**
-   * Set authentication token
-   */
   setAuthToken(token: string | null): void {
-    if (token) {
-      localStorage.setItem('auth_token', token);
-    } else {
-      localStorage.removeItem('auth_token');
-    }
+    if (token) localStorage.setItem("auth_token", token);
+    else localStorage.removeItem("auth_token");
   }
 
-  /**
-   * Set authentication token (alias for setAuthToken)
-   */
-  setToken(token: string): void {
-    this.setAuthToken(token);
-  }
-
-  /**
-   * Get authentication token
-   */
   getAuthToken(): string | null {
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem("auth_token");
   }
 
-  /**
-   * Check if user is authenticated
-   */
+  clearAuth(): void {
+    localStorage.removeItem("auth_token");
+  }
+
   isAuthenticated(): boolean {
     return !!this.getAuthToken();
   }
-
-  /**
-   * Clear authentication
-   */
-  clearAuth(): void {
-    localStorage.removeItem('auth_token');
-  }
-
-  /**
-   * Remove authentication token (alias for clearAuth)
-   */
-  removeToken(): void {
-    this.clearAuth();
-  }
-
-  /**
-   * Get API configuration
-   */
-  getConfig(): {
-    baseURL: string;
-    timeout: number;
-    retries: number;
-    retryDelay: number;
-  } {
-    return {
-      baseURL: this.baseURL,
-      timeout: this.timeout,
-      retries: this.retries,
-      retryDelay: this.retryDelay,
-    };
-  }
 }
 
-// Create singleton instance
+// Singleton instance
 const apiClient = new APIClient(API_CONFIG);
-
-// Initialize interceptors when the module is imported
-// Use dynamic import to avoid circular dependency
-import('./interceptors.ts').then(({ setupInterceptors }) => {
-  setupInterceptors(apiClient);
-}).catch(error => {
-  console.warn('Failed to setup interceptors:', error);
-});
 
 export default apiClient;

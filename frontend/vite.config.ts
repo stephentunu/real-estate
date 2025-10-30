@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       // Expose environment variables to the client
-      __VITE_API_URL__: JSON.stringify(env.VITE_API_URL || 'http://localhost:8000'),
+      __VITE_API_URL__: JSON.stringify(env.VITE_API_URL || 'http://127.0.0.1:8000'),
       __VITE_SUPABASE_PROJECT_ID__: JSON.stringify(env.VITE_SUPABASE_PROJECT_ID),
       __VITE_SUPABASE_ANON_KEY__: JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
       __VITE_SUPABASE_URL__: JSON.stringify(env.VITE_SUPABASE_URL),

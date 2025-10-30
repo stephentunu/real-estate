@@ -22,7 +22,7 @@ export const AuthButton: React.FC = () => {
     // If auth context is not available, show sign in button
     return (
       <Button asChild variant="ghost" size="sm" className="text-gray-800 dark:text-gray-100 hover:text-primary hover:bg-primary/10">
-        <Link to="/auth">
+        <Link to="/signin">
           <User className="h-4 w-4 mr-2" />
           Sign In
         </Link>
@@ -55,7 +55,7 @@ export const AuthButton: React.FC = () => {
     if (!user) {
       return (
         <Button asChild variant="ghost" size="sm" className="text-gray-800 dark:text-gray-100 hover:text-primary hover:bg-primary/10">
-          <Link to="/auth">
+          <Link to="/signin">
             <User className="h-4 w-4 mr-2" />
             Sign In
           </Link>
